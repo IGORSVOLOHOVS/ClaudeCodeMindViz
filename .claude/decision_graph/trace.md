@@ -2,12 +2,16 @@
 
 _Пишет хук action_trace.sh — не редактировать вручную._
 
+Цвета: жёлтый шестиугольник — поставлен вопрос, зелёный — принято решение, красный — отвергнуто или ошибка; серые — шаги агентов, синие — сами агенты. На стрелках — результат предыдущего шага.
+
 ```mermaid
 flowchart TD
   classDef agentHead fill:#e7f5ff,stroke:#1c7ed6,stroke-width:2px,color:#212529
   classDef agentStep fill:#f1f3f5,stroke:#868e96,color:#212529
   classDef failed fill:#ffe3e3,stroke:#c92a2a,stroke-width:2px,color:#212529
   classDef decision fill:#fff3bf,stroke:#f08c00,stroke-width:2px,color:#212529
+  classDef decisionDone fill:#d3f9d8,stroke:#2f9e44,stroke-width:2px,color:#212529
+  classDef decisionRejected fill:#ffe3e3,stroke:#c92a2a,stroke-dasharray:4 3,color:#212529
   S0["Архив прошлого графа"]
   S1{{"Q: язык и зависимости"}}:::decision
   S0 --> S1
@@ -117,4 +121,64 @@ flowchart TD
   S50 --> S51
   S52["Правил graph_viewer.py"]
   S51 --> S52
+  S53["Инструмент: select:mcp__claude_ai_Mermaid…"]:::agentStep
+  S44 --> S53
+  S54["Порог рекурсии и время"]:::agentStep
+  S53 --> S54
+  S55["Кодировка stderr при перенаправлении"]:::agentStep
+  S54 --> S55
+  S56["Mermaid Chart: validate and… ×7"]:::agentStep
+  S55 --> S56
+  S57["Проверка валидности end_ids"]:::agentStep
+  S56 --> S57
+  S58["Вернул результат"]:::agentStep
+  S46 --> S58
+  S59["Записал action_trace.sh"]
+  S52 --> S59
+  S60["Mermaid Chart: validate and…"]
+  S59 --> S60
+  S61["Тесты парсера со стрелками"]
+  S60 --> S61
+  S62["Результат валидации графа"]
+  S61 --> S62
+  S63["Тест стрелок и цветов"]
+  S62 --> S63
+  S64["Легенда в живой трассе"]
+  S63 --> S64
+  S65["Отчёт агентов проверки"]
+  S64 --> S65
+  S66["Вернул результат"]:::agentStep
+  S57 --> S66
+  S67["Правил action_trace.sh"]
+  S65	Отчёт агентов проверки	1		 verify:edge-cases calls: 25 running --> S67
+  S68["Правил action_trace.sh"]
+  S67	Правил action_trace.sh	1		правка внесена --> S68
+  S69["Правил action_trace.sh"]
+  S68	Правил action_trace.sh	1		правка внесена --> S69
+  S70["Правил action_trace.sh"]
+  S69	Правил action_trace.sh	1		правка внесена --> S70
+  S71{{"Q: что чинить из…"}}:::decision
+  S70 -->|"правка внесена"| S71
+  S72["Записал mmdstats.py"]
+  S71 -->|"правка внесена"| S72
+  S73["Записал test_mmdstats.py"]
+  S72 -->|"файл обновлён"| S73
+  S74["Читал task_labels.png"]
+  S73 -->|"файл обновлён"| S74
+  S75["Правил mmdstats.py ×3"]
+  S74 --> S75
+  S76["Правил test_mmdstats.py"]
+  S75 -->|"правка внесена"| S76
+  S77["Тесты новой версии mmdstats"]
+  S76 -->|"правка внесена"| S77
+  S78["Формат состояния трассы"]
+  S77 -->|"10. A: mmdstats.py +…"| S78
+  S79["Повтор теста стрелок хука"]
+  S78 -->|"main: S77Тесты новой версии…"| S79
+  S80["Правил mmdstats.py ×2"]
+  S79 -->|"--- state main: S10Список…"| S80
+  S81["Правил test_mmdstats.py"]
+  S80 -->|"правка внесена"| S81
+  S82["Записал .gitignore"]
+  S81 -->|"правка внесена"| S82
 ```

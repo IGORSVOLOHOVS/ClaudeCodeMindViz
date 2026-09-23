@@ -1,1 +1,6 @@
-/__pycache__
+# служебные файлы хука трассировки
+.claude/decision_graph/.trace_state/
+.claude/decision_graph/.trace.lock/
+.claude/settings.local.json
+__pycache__/
+*.pyc

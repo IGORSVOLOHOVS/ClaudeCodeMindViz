@@ -25,5 +25,8 @@ flowchart TD
   H3 -->|"образец: 7 узлов, 6 рёбер, 3 статуса"| T1["T: unittest на образце графа — 8 тестов"]:::done
   T1 -->|"Ran 8 tests in 0.008s: OK"| T2["T: прогон на реальном current_task.md"]:::done
   T2 -->|"открытый вопрос: Q3 формат вывода"| T3["T: агенты: краевые случаи парсера + код-ревью"]:::active
-  T3 -->|"отчёт: findings + verified_ok"| A2["A: mmdstats.py + test_mmdstats.py"]:::active
+  T3 -->|"ревью: 11 находок — 1 high, 6 medium, 4 low"| Q5["Q: что чинить из находок ревью"]:::active
+  Q5 -->|"цикл X-A-B: memo даёт 4 вместо 6; RecursionError на 1200 узлах"| H7["H: чинить всё: цепочка без рекурсии, SKIP по словам, стрелки в кавычках, stderr для мусора"]:::active
+  Q5 -->|"реальные графы — DAG, баг не проявляется"| H8["H: оставить как есть"]:::rejected
+  H7 -->|"тест на каждую находку"| A2["A: mmdstats.py + test_mmdstats.py"]:::active
 ```
