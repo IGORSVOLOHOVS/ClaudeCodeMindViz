@@ -1,4 +1,5 @@
 """Тесты mmdstats: разбор узлов, фигур, стрелок и подписей; статусы; цепочки (DAG, циклы, длинные); CLI."""
+
 import io
 import json
 import pathlib
@@ -26,7 +27,7 @@ flowchart TD
 
 
 def graph(*lines):
-    return "flowchart TD\n" + "\n".join("  " + l for l in lines) + "\n"
+    return "flowchart TD\n" + "\n".join("  " + line for line in lines) + "\n"
 
 
 class ParseTest(unittest.TestCase):
@@ -49,7 +50,15 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(edges, [("A", "B")])
 
     def test_edge_labels_all_forms(self):
-        nodes, edges = mmdstats.parse(graph('A["Q: a"] -->|"8 тестов OK"| B["H: b"]:::done', 'B -.->|x| C', 'C -- почему --> D', 'D -. пунктир .-> E', 'E == жирно ==> F'))
+        nodes, edges = mmdstats.parse(
+            graph(
+                'A["Q: a"] -->|"8 тестов OK"| B["H: b"]:::done',
+                "B -.->|x| C",
+                "C -- почему --> D",
+                "D -. пунктир .-> E",
+                "E == жирно ==> F",
+            )
+        )
         self.assertEqual(edges, [("A", "B"), ("B", "C"), ("C", "D"), ("D", "E"), ("E", "F")])
         self.assertEqual(nodes["B"]["status"], "done")
 
@@ -62,15 +71,28 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(edges, [("A", "B"), ("B", "C"), ("D", "F"), ("E", "F")])
 
     def test_all_shapes_and_unquoted_labels(self):
-        src = graph('A["Q: a"]', 'B("Q: b")', 'C(["Q: c"])', 'D[["Q: d"]]', 'E{{"Q: e"}}', 'F{"Q: f"}',
-                    'G(("Q: g"))', 'H>"Q: h"]', 'I[/"Q: i"/]', 'J[Q: без кавычек]', 'K[("Q: k")]')
+        src = graph(
+            'A["Q: a"]',
+            'B("Q: b")',
+            'C(["Q: c"])',
+            'D[["Q: d"]]',
+            'E{{"Q: e"}}',
+            'F{"Q: f"}',
+            'G(("Q: g"))',
+            'H>"Q: h"]',
+            'I[/"Q: i"/]',
+            "J[Q: без кавычек]",
+            'K[("Q: k")]',
+        )
         nodes, _ = mmdstats.parse(src)
         self.assertEqual(len(nodes), 11)
         self.assertTrue(all(n["kind"] == "Q" for n in nodes.values()), {k: v["label"] for k, v in nodes.items()})
         self.assertEqual(nodes["J"]["label"], "Q: без кавычек")
 
     def test_arrow_forms(self):
-        _, edges = mmdstats.parse(graph("A --- B", "B -.-> C", "C ==> D", "D <--> E", "E --o F", "F ----> G", "G -..-> H"))
+        _, edges = mmdstats.parse(
+            graph("A --- B", "B -.-> C", "C ==> D", "D <--> E", "E --o F", "F ----> G", "G -..-> H")
+        )
         self.assertEqual(len(edges), 7)
 
     def test_arrow_inside_quotes_is_text(self):
@@ -80,12 +102,20 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(nodes["B"]["label"], "H: a --- b | c")
 
     def test_class_statements(self):
-        nodes, _ = mmdstats.parse(graph('Q1["Q: a"]', 'H1["H: b"]', "Q1 --> H1", "class Q1 active", "class H1,Q1 rejected"))
+        nodes, _ = mmdstats.parse(
+            graph('Q1["Q: a"]', 'H1["H: b"]', "Q1 --> H1", "class Q1 active", "class H1,Q1 rejected")
+        )
         self.assertEqual(nodes["H1"]["status"], "rejected")
         self.assertEqual(nodes["Q1"]["status"], "rejected")
 
     def test_skip_needs_word_boundary(self):
-        nodes, edges = mmdstats.parse(graph('endpoint["Q: конец?"]:::active', 'styleQ["Q: стиль"]:::active --> graph2["A: граф"]:::done', "A --> endpoint"))
+        nodes, edges = mmdstats.parse(
+            graph(
+                'endpoint["Q: конец?"]:::active',
+                'styleQ["Q: стиль"]:::active --> graph2["A: граф"]:::done',
+                "A --> endpoint",
+            )
+        )
         self.assertEqual(nodes["endpoint"]["label"], "Q: конец?")
         self.assertEqual(nodes["graph2"]["status"], "done")
         self.assertEqual(len(edges), 2)
@@ -127,7 +157,7 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(s["rejected"], ["H: гипотеза раз"])
 
     def test_counts_add_up_in_text_output(self):
-        text = mmdstats.render(mmdstats.stats(graph('Q1["Q: a"]:::wip', 'S0["шаг"]', 'Q1 --> S0')))
+        text = mmdstats.render(mmdstats.stats(graph('Q1["Q: a"]:::wip', 'S0["шаг"]', "Q1 --> S0")))
         self.assertRegex(text, r"вопрос\s+1\s+в работе 0, принято 0, отвергнуто 0, без статуса 1")
         self.assertRegex(text, r"прочие\s+1\s+в работе 0, принято 0, отвергнуто 0, без статуса 1")
 
@@ -140,8 +170,10 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(s["longest_chain"], ["Q: q", "B"])
 
     def test_longest_chain_with_cycle_any_order(self):
-        for lines in (("X --> A", "A --> B", "B --> X", "X --> C", "C --> D", "D --> E"),
-                      ("A --> B", "B --> X", "X --> A", "X --> C", "C --> D", "D --> E")):
+        for lines in (
+            ("X --> A", "A --> B", "B --> X", "X --> C", "C --> D", "D --> E"),
+            ("A --> B", "B --> X", "X --> A", "X --> C", "C --> D", "D --> E"),
+        ):
             self.assertEqual(len(mmdstats.stats(graph(*lines))["longest_chain"]), 6, lines)
         self.assertEqual(len(mmdstats.stats(graph("A --> B", "B --> A", "A --> A"))["longest_chain"]), 2)
 
@@ -189,7 +221,7 @@ class CliTest(unittest.TestCase):
             code, _, err = self.run_cli([str(missing)])
             self.assertIn("не удалось прочитать", str(code))
             latin = pathlib.Path(d) / "latin.mmd"
-            latin.write_bytes("flowchart TD\n  A[\"Q: ошибка\"]\n".encode("cp1251"))
+            latin.write_bytes('flowchart TD\n  A["Q: ошибка"]\n'.encode("cp1251"))
             code, _, _ = self.run_cli([str(latin)])
             self.assertIn("не удалось прочитать", str(code))
             readme = pathlib.Path(d) / "README.md"
