@@ -6,7 +6,7 @@
 открытые вопросы, отвергнутые гипотезы и самую длинную цепочку.
 
 Использование:
-  python mmdstats.py [файл] [--json]
+  python src/mmdstats.py [файл] [--json]
 Файл по умолчанию: .claude/decision_graph/current_task.md
 
 Разбор построчный: узлы `id["текст"]:::статус` в любой фигуре Mermaid
@@ -16,6 +16,7 @@
 разобрать, печатается в stderr и пропускается.
 Самая длинная цепочка идёт только по неотвергнутым узлам.
 """
+
 import argparse
 import collections
 import html
@@ -31,15 +32,21 @@ BRUTE_FORCE_LIMIT = 300  # выше — перебор простых путей
 
 FENCE = re.compile(r"```mermaid[^\n]*\n([\s\S]*?)(?:```|$)")
 HEADER = re.compile(r"^(flowchart|graph)\b")
-SKIP = re.compile(r"^(?:%%|flowchart\b|graph\b|classDef\b|style\b|linkStyle\b|subgraph\b|end\b|direction\b|click\b|accTitle\b|accDescr\b)")
+SKIP = re.compile(
+    r"^(?:%%|flowchart\b|graph\b|classDef\b|style\b|linkStyle\b|subgraph\b|end\b|direction\b|click\b|accTitle\b|accDescr\b)"
+)
 CLASS_STMT = re.compile(r"^class\s+([\w,\s]+?)\s+(\w+)$")
 # Узел: id, затем необязательная фигура (любые скобки) с текстом в кавычках или без, затем :::статус
 NODE_DEF = re.compile(r'^(\w+)\s*(?:([\[({>/\\]+)\s*(?:"([^"]*)"|([^\]})/\\]*?))\s*[\])}/\\]+)?(?::::(\w+))?$')
 QUOTED = re.compile(r'"[^"]*"')
 PLACEHOLDER = re.compile(r'"\x00(\d+)\x00"')
 # Подписи рёбер: |текст| убираем, «-- текст -->», «== текст ==>», «-. текст .->» сводим к голой стрелке
-EDGE_LABELS = [(re.compile(r"\|[^|]*\|"), ""), (re.compile(r"--\s[^-]+?\s-->"), "-->"),
-               (re.compile(r"==\s[^=]+?\s==>"), "==>"), (re.compile(r"-\.\s[^.]+?\s\.->"), "-.->")]
+EDGE_LABELS = [
+    (re.compile(r"\|[^|]*\|"), ""),
+    (re.compile(r"--\s[^-]+?\s-->"), "-->"),
+    (re.compile(r"==\s[^=]+?\s==>"), "==>"),
+    (re.compile(r"-\.\s[^.]+?\s\.->"), "-.->"),
+]
 ARROW = re.compile(r"\s*(?:<?-{2,}>|-{3,}|-\.+->|-\.-|<?=+>|={3,}|--[ox]|~~~)\s*")
 
 
@@ -52,7 +59,7 @@ def mermaid_source(text, path=""):
         raise ValueError("нет блока ```mermaid")
     else:
         src = text
-    first = next((l.strip() for l in src.splitlines() if l.strip() and not l.strip().startswith("%%")), "")
+    first = next((row.strip() for row in src.splitlines() if row.strip() and not row.strip().startswith("%%")), "")
     if not HEADER.match(first):
         raise ValueError(f"не flowchart (первая строка: {first[:40]!r})")
     return src
@@ -196,11 +203,15 @@ def render(s):
         c = s["by_kind"][kind]
         total = sum(c.values())
         if total:
-            lines.append(f"{name:9} {total:3}   в работе {c['active']}, принято {c['done']}, "
-                         f"отвергнуто {c['rejected']}, без статуса {c['none']}")
+            lines.append(
+                f"{name:9} {total:3}   в работе {c['active']}, принято {c['done']}, "
+                f"отвергнуто {c['rejected']}, без статуса {c['none']}"
+            )
     lines += ["", "Открытые вопросы:"] + ([f"  • {q}" for q in s["open_questions"]] or ["  — нет"])
     lines += ["", "Отвергнуто:"] + ([f"  ✗ {r}" for r in s["rejected"]] or ["  — ничего"])
-    lines += ["", f"Самая длинная цепочка ({len(s['longest_chain'])}):"] + [f"  {i + 1}. {l}" for i, l in enumerate(s["longest_chain"])]
+    lines += ["", f"Самая длинная цепочка ({len(s['longest_chain'])}):"] + [
+        f"  {i + 1}. {label}" for i, label in enumerate(s["longest_chain"])
+    ]
     return "\n".join(lines)
 
 
@@ -214,7 +225,7 @@ def main(argv=None):
     except (OSError, UnicodeDecodeError) as e:
         sys.exit(f"не удалось прочитать {args.file}: {e}")
     try:
-        s = stats(text, args.file, warn=lambda l: print(f"строка не разобрана: {l}", file=sys.stderr))
+        s = stats(text, args.file, warn=lambda row: print(f"строка не разобрана: {row}", file=sys.stderr))
     except ValueError as e:
         sys.exit(f"{args.file}: {e}")
     print(json.dumps(s, ensure_ascii=False, indent=2) if args.json else render(s))
