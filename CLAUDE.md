@@ -58,6 +58,49 @@ current turn. Say so in the PR comment or the commit body:
 This is the only rules file. If a rule is not here, it is not a rule -
 put it here or drop it.
 
+## The decision graph
+
+For a task longer than three steps, keep `.claude/decision_graph/current_task.md`.
+Its nodes are Q (question), H (hypothesis), T (check) and A (decision), and
+a node's status is a Mermaid class: `:::active`, `:::done` or `:::rejected`.
+Change the file with one targeted Edit, and only when a status changes or a
+decision is made. Keep the Mermaid syntax valid. After `/clear` or `/compact`,
+read the file before going on.
+
+The file's format - the `classDef` lines are required, or the statuses are
+not coloured:
+
+```mermaid
+flowchart TD
+  classDef active fill:#fff3bf,stroke:#f08c00,stroke-width:2px,color:#212529
+  classDef done fill:#d3f9d8,stroke:#2f9e44,color:#212529
+  classDef rejected fill:#ffe3e3,stroke:#c92a2a,stroke-dasharray:4 3,color:#212529
+
+  Q1["Q: what needs finding out"]:::done
+  Q1 -->|"the fact that ruled this option out"| H1["H: first hypothesis"]:::rejected
+  Q1 -->|"an example input"| H2["H: second hypothesis"]:::active
+  H2 -->|"what goes into the check"| T1["T: how it is checked"]:::active
+```
+
+Yellow is in progress, green is accepted, a dashed red is rejected.
+
+- An arrow's label carries the real data that passed between the nodes: a
+  concrete input, a check's result, a number - `-->|"Python 3.13 present, no jq"|`,
+  `-->|"Ran 8 tests: OK"|`, `-->|"input: current_task.md, 13 nodes"|`. Not an
+  abstraction such as "check", but what was actually seen. A label holds no
+  `"` and no `|`.
+- A node's text is always in quotes, `["..."]`, with no `"` inside, so
+  brackets and special characters do not break the syntax.
+- A status changes by editing the one suffix on the line that defines the
+  node, `:::active` to `:::done`. Never add `X:::done` on a line of its own:
+  classes add up, they do not replace each other.
+- `.claude/decision_graph/trace.md` is written by a hook: never edit it. This
+  repository does not wire that hook up; `docs/manual.md` says how to bring it
+  back on a machine that has its script. Where it is on, a Bash or PowerShell
+  call's `description` says in at most four plain words what is being done
+  ("Checking the trace hook", "Viewer tests"): that text becomes a node in
+  `trace.md`, and the hook cuts anything longer.
+
 ## Where this repository is deliberately relaxed
 
 - Keys are not committed: rule 4 reverses R-02 by the owner's decision.

@@ -47,3 +47,24 @@ The `classDef` lines are what colour the statuses when the graph is drawn: yello
 All of Mermaid's node shapes and the arrows `-->`, `---`, `-.->`, `==>`, `<-->` and `--o` are read, as are chains `A --> B --> C`, groups `A & B --> C`, labels in `|"..."|` and `-- text -->`, and `class A,B status` statements.
 
 `.claude/decision_graph/trace.md` and `archive/` are graphs from before the lab, written by a Claude Code hook that this repository no longer wires up.
+
+## Bringing the trace hook back
+
+The hook appended one node to `.claude/decision_graph/trace.md` after every tool call: the call's description, the decisions from `current_task.md`, and failures in red. After 400 steps it moved the file to `trace.<date>.md` and started a new one. Its script, `~/.claude/scripts/action_trace.sh`, is not in this repository.
+
+`.claude/settings.json` is the lab's and stays as it is. Claude Code merges the hooks of every settings file it reads, so on a machine that has the script, put the hook in `.claude/settings.local.json`, which `.gitignore` keeps out of git:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {"matcher": "*", "hooks": [{"type": "command", "command": "bash \"$HOME/.claude/scripts/action_trace.sh\"", "async": true}]}
+    ],
+    "PostToolUseFailure": [
+      {"matcher": "*", "hooks": [{"type": "command", "command": "bash \"$HOME/.claude/scripts/action_trace.sh\"", "async": true}]}
+    ]
+  }
+}
+```
+
+Without the script the hook fails on every call, so leave the file out where the script is missing.
