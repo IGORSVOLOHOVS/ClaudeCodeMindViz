@@ -1,28 +1,20 @@
 {
+  "env": {
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONUTF8": "1",
+    "MSYS_NO_PATHCONV": "1"
+  },
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.claude/scripts/action_trace.sh\"",
-            "async": true
-          }
-        ]
-      }
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start-stop.ps1\" -Event SessionStart" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log.ps1\" -Event UserPromptSubmit" }] }],
+    "PreToolUse": [
+      { "matcher": "Bash|PowerShell", "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/gate.ps1\" -Event PreToolUse" }] }
     ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.claude/scripts/action_trace.sh\"",
-            "async": true
-          }
-        ]
-      }
-    ]
+    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log.ps1\" -Event PostToolUse" }] }],
+    "Notification": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log.ps1\" -Event Notification" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start-stop.ps1\" -Event Stop" }] }],
+    "SubagentStop": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log.ps1\" -Event SubagentStop" }] }],
+    "PreCompact": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log.ps1\" -Event PreCompact" }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start-stop.ps1\" -Event SessionEnd" }] }]
   }
 }
